@@ -6,6 +6,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 
+import com.pruebatecnica.zabud.exceptions.BadRequest;
+import com.pruebatecnica.zabud.exceptions.ResourceNotFound;
 import com.pruebatecnica.zabud.models.entities.Factura;
 import com.pruebatecnica.zabud.models.entities.Item;
 import com.pruebatecnica.zabud.models.entities.Producto;
@@ -15,7 +17,6 @@ import com.pruebatecnica.zabud.models.entities.dto.ItemRequest;
 import com.pruebatecnica.zabud.models.entities.dto.ItemResponse;
 import com.pruebatecnica.zabud.repositories.FacturaRepository;
 import com.pruebatecnica.zabud.repositories.ItemRepository;
-import com.pruebatecnica.zabud.repositories.ProductoRepository;
 import com.pruebatecnica.zabud.services.IFacturaService;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,10 +28,12 @@ public class FacturaService implements IFacturaService {
 
     private final FacturaRepository facturaRepository;
     private final ItemRepository itemRepository;
+    private final ProductoService productoService;
 
     @Override
     public FacturaResponse obtenerFacturaConProductos(Long facturaId) {
-        Factura factura = facturaRepository.findById(facturaId).orElseThrow(() -> new RuntimeException("Factura no encontrada"));
+        Factura factura = facturaRepository.findById(facturaId)
+                .orElseThrow(() -> new ResourceNotFound("Factura con ID: "+ facturaId +" no encontrada"));
 
         return buildFacturaResponse.apply(factura);
     }
@@ -51,11 +54,11 @@ public class FacturaService implements IFacturaService {
 
     @Transactional
     public void guardarItemsEnBD(Long facturaId, List<Item> items) {
-        Optional<Factura> factura = facturaRepository.findById(facturaId);
-        if (factura.isEmpty()) throw new RuntimeException("Factura no encontrada con ID: " + facturaId);
+        Factura factura = facturaRepository.findById(facturaId)
+                .orElseThrow(() -> new ResourceNotFound("Factura con ID: " + facturaId + " no encontrada"));
 
         // Asociar el item con la factura
-        items.forEach(item -> item.setFactura(factura.get()));
+        items.forEach(item -> item.setFactura(factura));
 
         // Guardar los items en la base de datos
         itemRepository.saveAll(items);
@@ -80,13 +83,12 @@ public class FacturaService implements IFacturaService {
         return itemRequests.stream()
                 .map(itemRequest -> {
                     // Se consulta el producto en la base de datos
-                    Producto producto = productoRepository.findByCodigo(itemRequest.producto().getCodigo())
-                            .orElseThrow(() -> new RuntimeException("Producto no encontrado, por favor verifique el codigo"));
+                    Producto producto = productoService.obtenerPorCodigo(itemRequest.producto().getCodigo());
 
                     // Se valida que el producto que se va a registrar en la factura sea el mismo que se encuentra en la base de datos
                     if (!Objects.equals(producto.getNombre(), itemRequest.producto().getNombre()) ||
                             producto.getValor() != itemRequest.producto().getValor())
-                        throw new RuntimeException("Producto "+ producto.getNombre() +" invalido, verifique los datos");
+                        throw new BadRequest("Producto con codigo: "+ producto.getCodigo() +" invalido, verifique los datos");
 
                     return Item.builder()
                             .cantidad(itemRequest.cantidad())
@@ -103,7 +105,6 @@ public class FacturaService implements IFacturaService {
             .valorTotal(factura.getValorTotal())
             .fecha(LocalDateTime.now().toString())
             .build();
-    private final ProductoRepository productoRepository;
 
     private List<ItemResponse> convertirItemsAItemsResponse(List<Item> items) {
         return items.stream().map(item -> ItemResponse.builder()

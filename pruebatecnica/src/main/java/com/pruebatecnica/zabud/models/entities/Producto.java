@@ -1,12 +1,11 @@
 package com.pruebatecnica.zabud.models.entities;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.proxy.HibernateProxy;
 
+import java.util.List;
 import java.util.Objects;
 
 
@@ -28,6 +27,10 @@ public class Producto {
     private String nombre;
 
     private double valor;
+
+    @JsonIgnore
+    @OneToMany(targetEntity = Item.class, mappedBy = "producto", fetch = FetchType.LAZY)
+    private List<Item> items;
 
     @Override
     public final boolean equals(Object o) {

@@ -22,11 +22,11 @@ public class Item {
 
     private int cantidad;
 
-    @OneToOne(targetEntity = Producto.class, cascade = CascadeType.PERSIST)
+    @ManyToOne(targetEntity = Producto.class)
     private Producto producto;
 
-    @ManyToOne(targetEntity = Factura.class)
     @JsonIgnore
+    @ManyToOne(targetEntity = Factura.class)
     private Factura factura;
 
     @Column(name = "valor_total")

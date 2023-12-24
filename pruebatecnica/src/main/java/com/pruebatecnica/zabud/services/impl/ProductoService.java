@@ -20,11 +20,19 @@ public class ProductoService implements IProductService {
 
     @Override
     public Producto obtenerPorCodigo(String codigo) {
-        return productoRepository.findByCodigo(codigo).orElse(null);
+        return productoRepository.findByCodigo(codigo).orElseThrow(() -> new RuntimeException("No se encontró el producto"));
     }
 
     @Override
     public ProductoResponse crearProducto(ProductoRequest productoRequest) {
+        if (productoRequest.nombre() == null || productoRequest.nombre().isEmpty()) {
+            throw new RuntimeException("El nombre del producto es requerido");
+        }
+
+        if (productoRequest.valor() <= 0) {
+            throw new RuntimeException("El valor del producto es requerido");
+        }
+
         Producto producto = productoRepository.save(Producto.builder()
                 .codigo(productoRequest.nombre() + UUID.randomUUID())
                 .nombre(productoRequest.nombre())
@@ -44,16 +52,12 @@ public class ProductoService implements IProductService {
                     return convertirProductoAProductoResponse(productoRequest).apply(producto);
                 });
 
-        return productoResponse.orElseThrow(() -> new RuntimeException("No se encontro el producto"));
+        return productoResponse.orElseThrow(() -> new RuntimeException("No se encontró el producto"));
     }
 
     @Override
     public void eliminarProducto(Long id) {
-        Optional<Producto> producto = productoRepository.findById(id);
-
-        if (producto.isEmpty()) {
-            throw new RuntimeException("No se encontro el producto");
-        }
+        productoRepository.findById(id).orElseThrow(() -> new RuntimeException("No se encontró el producto"));
 
         productoRepository.deleteById(id);
     }

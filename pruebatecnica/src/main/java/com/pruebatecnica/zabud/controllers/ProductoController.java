@@ -19,19 +19,21 @@ public class ProductoController {
 
     @PostMapping
     public ResponseEntity<?> crearProducto(@RequestBody ProductoRequest productoRequest) {
-        ProductoResponse productoResponse = productoService.crearProducto(productoRequest);
+        try {
+            ProductoResponse productoResponse = productoService.crearProducto(productoRequest);
 
-        if (productoResponse != null) {
-            return ResponseEntity.ok(productoResponse);
+            return ResponseEntity.created(new URI("/api/productos")).body(productoResponse);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
-
-        return ResponseEntity.badRequest().build();
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<?> actualizarProducto(@PathVariable Long id, @RequestBody ProductoRequest productoRequest) {
         try {
-            return ResponseEntity.created(new URI("/api/productos/".concat(id.toString()))).body(productoService.actualizarProducto(id, productoRequest));
+            ProductoResponse productoActualizado = productoService.actualizarProducto(id, productoRequest);
+
+            return ResponseEntity.ok(productoActualizado);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
@@ -41,6 +43,7 @@ public class ProductoController {
     public ResponseEntity<?> eliminarProducto(@PathVariable Long id) {
         try {
             productoService.eliminarProducto(id);
+
             return ResponseEntity.noContent().build();
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());

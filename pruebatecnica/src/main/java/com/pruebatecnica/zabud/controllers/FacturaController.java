@@ -29,25 +29,15 @@ public class FacturaController {
         }
     }
 
-//    TODO: Me da un badrequest ya que no me acepta el id en el body del producto
-//    TODO: Si no se lo paso me crea el producto nuevamente en la base en vez de traerme el que ya existe
     @PostMapping
     public ResponseEntity<?> crearFactura(@RequestBody FacturaRequest facturaRequest) {
-        // Se obtienen el codigo de los productos que se van a registrar en la factura
-        List<String> codigosDeProducto = facturaRequest.items().stream().map(itemRequest -> itemRequest.producto().getCodigo()).toList();
-
-        // Se valida que los productos existan
-        boolean productoInexistente = codigosDeProducto.stream().allMatch(productoId -> productoService.obtenerPorCodigo(productoId) == null);
-
-        if (productoInexistente) return ResponseEntity.status(404).body("Producto no encontrado, por favor verifique el codigo");
-
         try {
             FacturaResponse facturaResponse = facturaService.guardarFactura(facturaRequest);
 
             return ResponseEntity.created(new URI("/api/facturas")).body(facturaResponse);
 
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.println(e.getMessage());
             // retorna bad request con el mensaje que se manda desde el service
             return ResponseEntity.badRequest().build();
         }

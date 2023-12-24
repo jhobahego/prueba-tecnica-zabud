@@ -12,7 +12,7 @@ public interface IProductService {
 
     ProductoResponse crearProducto(ProductoRequest productoRequest);
 
-    ProductoResponse actualizarProducto(Long id, ProductoRequest productoRequest);
+    Producto actualizarProducto(Long id, ProductoRequest productoRequest);
 
     void eliminarProducto(Long id);
 }

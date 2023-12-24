@@ -51,16 +51,24 @@ public class ProductoService implements IProductService {
     }
 
     @Override
-    public ProductoResponse actualizarProducto(Long id, ProductoRequest productoRequest) {
-        Optional<ProductoResponse> productoResponse = productoRepository.findById(id)
-                .map(producto -> {
-                    producto.setNombre(productoRequest.nombre());
-                    producto.setValor(productoRequest.valor());
+    public Producto actualizarProducto(Long id, ProductoRequest productoRequest) {
+        String nombre = productoRequest.nombre();
+        double valor = productoRequest.valor();
 
-                    return convertirAProductoResponse(producto);
-                });
+        if (nombre == null || nombre.isEmpty()) {
+            throw new BadRequest("El nombre del producto es requerido");
+        }
 
-        return productoResponse.orElseThrow(() -> new ResourceNotFound("No se encontró el producto"));
+        if (valor <= 0) {
+            throw new BadRequest("El valor del producto debe ser mayor que 0");
+        }
+
+        Producto producto = obtenerPorId(id);
+
+        producto.setNombre(nombre);
+        producto.setValor(valor);
+
+        return productoRepository.save(producto);
     }
 
     @Override
